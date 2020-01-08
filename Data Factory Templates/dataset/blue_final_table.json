@@ -1,0 +1,34 @@
+{
+	"name": "blue_final_table",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "blue_azure_sql_server",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "cotacaoCompra",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "cotacaoVenda",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "dataHoraCotacao",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "dolar_pedro",
+			"table": "dolar_final_pedro"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

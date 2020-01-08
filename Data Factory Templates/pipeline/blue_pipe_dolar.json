@@ -1,0 +1,200 @@
+{
+	"name": "blue_pipe_dolar",
+	"properties": {
+		"activities": [
+			{
+				"name": "blue_sp_convert",
+				"description": "Fazer um insert na tabela dolar_final_pedro com os dados da tabela dolar_stage_pedro convertendo-os em float e datetime2.",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "blue_copy_quotation",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dolar_pedro].[sp_blueatvadf]"
+				},
+				"linkedServiceName": {
+					"referenceName": "blue_azure_sql_server",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "blue_csv_blob",
+				"description": "Atv que irá buscar os dados já convertidos em float e datetime2 na tabela final e salva-los como CSV no contêiner blueatvctr",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "blue_sp_convert",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "cotacaoCompra",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "cotacaoCompra",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "cotacaoVenda",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "cotacaoVenda",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "dataHoraCotacao",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "dataHoraCotacao",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "blue_final_table",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blue_csv_blob",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "blue_copy_quotation",
+				"description": "Atividade de cópia que terá como fonte o Dataset blue_collect_data e como sink o Dataset blue_insert_data.",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "HttpReadSettings",
+							"requestMethod": "GET"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "cotacaoCompra",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cotacaoCompra",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "cotacaoVenda",
+									"type": "String"
+								},
+								"sink": {
+									"name": "cotacaoVenda",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "dataHoraCotacao",
+									"type": "String"
+								},
+								"sink": {
+									"name": "dataHoraCotacao",
+									"type": "String"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "blue_collect_data",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "blue_insert_data",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
